@@ -46,6 +46,9 @@ class Mine {
   drawUI() {
     this.app.textContent = "";
 
+    let message = document.createElement("div");
+    message.id = "message";
+
     let grid = document.createElement("div")
     grid.id = "grid";
     grid.style = `grid-template-columns: repeat(${this.size[1]}, 1fr)`;
@@ -65,8 +68,9 @@ class Mine {
       this.startNewGame();
     })
 
+    this.app.append(message);
     this.app.append(grid);
-    this.app.appendChild(button);
+    this.app.append(button);
   }
 
   click(x, y) {
@@ -123,6 +127,18 @@ class Mine {
         }
       }
     }
+
+    let message = "Spiel läuft.";
+    if (this.won()) {
+      message = "Du hast gewonnen.";
+    }
+
+    if (this.exploded()) {
+      message = "Du hast verloren.";
+    }
+    let messageDiv = document.getElementById("message");
+    messageDiv.textContent = message;
+
   }
 
   elementAt(point) {

@@ -1,17 +1,18 @@
 class Cell {
   constructor() {
-    this.mine = false;
+    this.bomb = false;
     this.revealed = false;
   }
 }
 
-
 class Mine {
   constructor() {
-    this.size = [20, 20];
-    this.mines = 20;
+    this.size = [9, 9];
+    this.bombs = 10;
     this.playing = false;
     this.alive = true;
+
+    this.click = this.click.bind(this)
   }
 
   init() {
@@ -30,11 +31,14 @@ class Mine {
       this.field.push(row)
     }
 
-    let i = this.mines
+    let i = this.bombs
     while (i > 0) {
+
       let x = Math.floor(Math.random() * this.size[0]);
       let y = Math.floor(Math.random() * this.size[1]);
-      this.field[x][y].mine = true;
+
+      // TODO: Check if field already has a bomb
+      this.field[x][y].bomb = true;
       i--;
     }
   }
@@ -66,7 +70,12 @@ class Mine {
   }
 
   click(x, y) {
-    console.log(x + " " + y)
+    if (this.playing) {
+      let cell = this.cellAt([parseInt(x), parseInt(y)]);
+      cell.revealed = true;
+      this.redrawUi();
+      this.checkState();
+    }
   }
 
   startNewGame() {
@@ -76,16 +85,41 @@ class Mine {
     this.redrawUi();
   }
 
+  checkState() {
+    if (this.exploded()) {
+      this.alive = false;
+      this.playing = false;
+    };
+
+    if (this.won()) {
+      this.playing = false;
+    }
+  }
+
+  exploded() {
+    return this.field.flat().filter((cell) => cell.bomb && cell.revealed).length > 0;
+  }
+
+  won() {
+    const flat = this.field.flat();
+    const all = flat.length;
+    const revealed = flat.filter((cell) => cell.revealed && !cell.bomb).length;
+    return all - this.bombs == revealed;
+  }
+
   redrawUi() {
     document.querySelectorAll("#grid>*").forEach((e) => {
       e.style = "";
-      e.classList.remove("block");
+      e.textContent = "";
     });
     for (const row_index in this.field) {
       for (const cell_index in this.field[row_index]) {
         const cell = this.field[row_index][cell_index];
-        if (cell.mine) {
-          this.elementAt([row_index, cell_index]).style = "background-color: red;"
+        if (cell.revealed) {
+          this.elementAt([row_index, cell_index]).classList.add("revealed");
+          if (cell.bomb) {
+            this.elementAt([row_index, cell_index]).classList.add("bomb");
+          }
         }
       }
     }
@@ -93,6 +127,10 @@ class Mine {
 
   elementAt(point) {
     return document.querySelector(`.${this.id(point[1], point[0])}`)
+  }
+
+  cellAt(point) {
+    return this.field[point[1]][point[0]]
   }
 
   id(x, y) {

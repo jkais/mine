@@ -108,11 +108,15 @@ class Mine {
     if (!cell.revealed) {
       cell.revealed = true;
       if (cell.bombs_around == 0) {
-        if (y - 1 >= 0) this.revealField(x, y - 1);
-        if (y + 1 < this.size[1]) this.revealField(x, y + 1);
-        if (x - 1 >= 0) this.revealField(x - 1, y);
-        if (x + 1 < this.size[0]) this.revealField(x + 1, y);
+        for (let dy = y - 1; dy <= y + 1; dy++) {
+          for (let dx = x - 1; dx <= x + 1; dx++) {
+            if (dy >= 0 && dy < this.size[1] && dx >= 0 && dx < this.size[0]) {
+              this.revealField(dx, dy);
+            }
+          }
+        }
       }
+
     }
   }
 

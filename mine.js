@@ -2,6 +2,7 @@ class Cell {
   constructor() {
     this.bomb = false;
     this.revealed = false;
+    this.bombs_around = 0;
   }
 }
 
@@ -19,6 +20,43 @@ class Mine {
     this.app = document.body;
     this.drawUI();
     this.startNewGame();
+  }
+
+  drawUI() {
+    this.app.textContent = "";
+
+    let message = document.createElement("div");
+    message.id = "message";
+
+    let grid = document.createElement("div")
+    grid.id = "grid";
+    grid.style = `grid-template-columns: repeat(${this.size[1]}, 1fr)`;
+
+    for (let y = 0; y < this.size[0]; y++) {
+      for (let x = 0; x < this.size[1]; x++) {
+        let cell = document.createElement("div");
+        cell.addEventListener("click", () => this.click(x, y))
+        cell.id = this.id(x, y);
+        grid.appendChild(cell);
+      }
+    }
+
+    let button = document.createElement("button");
+    button.innerHTML = "Neues Spiel starten"
+    button.addEventListener("click", () => {
+      this.startNewGame();
+    })
+
+    this.app.append(message);
+    this.app.append(grid);
+    this.app.append(button);
+  }
+
+  startNewGame() {
+    this.alive = true;
+    this.playing = true;
+    this.generateMinefield();
+    this.redrawUi();
   }
 
   generateMinefield() {
@@ -41,52 +79,41 @@ class Mine {
       this.field[x][y].bomb = true;
       i--;
     }
-  }
 
-  drawUI() {
-    this.app.textContent = "";
-
-    let message = document.createElement("div");
-    message.id = "message";
-
-    let grid = document.createElement("div")
-    grid.id = "grid";
-    grid.style = `grid-template-columns: repeat(${this.size[1]}, 1fr)`;
-
-    for (let y = 0; y < this.size[0]; y++) {
-      for (let x = 0; x < this.size[1]; x++) {
-        let cell = document.createElement("div");
-        cell.addEventListener("click", () => this.click(x, y))
-        cell.classList.add(this.id(x, y));
-        grid.appendChild(cell);
+    for (let y = 0; y < this.size[1]; y++) {
+      for (let x = 0; x < this.size[0]; x++) {
+        let bombs_around = 0;
+        for (let dy = y - 1; dy <= y + 1; dy++) {
+          for (let dx = x - 1; dx <= x + 1; dx++) {
+            if (dy >= 0 && dy < this.size[1] && dx >= 0 && dx < this.size[0]) {
+              if (this.cellAt([dx, dy]).bomb) bombs_around += 1;
+            }
+          }
+        }
+        this.cellAt([x, y]).bombs_around = bombs_around;
       }
     }
-
-    let button = document.createElement("button");
-    button.innerHTML = "Neues Spiel starten"
-    button.addEventListener("click", () => {
-      this.startNewGame();
-    })
-
-    this.app.append(message);
-    this.app.append(grid);
-    this.app.append(button);
   }
 
   click(x, y) {
     if (this.playing) {
-      let cell = this.cellAt([parseInt(x), parseInt(y)]);
-      cell.revealed = true;
+      this.revealField(x, y);
       this.redrawUi();
       this.checkState();
     }
   }
 
-  startNewGame() {
-    this.alive = true;
-    this.playing = true;
-    this.generateMinefield();
-    this.redrawUi();
+  revealField(x, y) {
+    let cell = this.cellAt([parseInt(x), parseInt(y)]);
+    if (!cell.revealed) {
+      cell.revealed = true;
+      if (cell.bombs_around == 0) {
+        if (y - 1 >= 0) this.revealField(x, y - 1);
+        if (y + 1 < this.size[1]) this.revealField(x, y + 1);
+        if (x - 1 >= 0) this.revealField(x - 1, y);
+        if (x + 1 < this.size[0]) this.revealField(x + 1, y);
+      }
+    }
   }
 
   checkState() {
@@ -115,14 +142,19 @@ class Mine {
     document.querySelectorAll("#grid>*").forEach((e) => {
       e.style = "";
       e.textContent = "";
+      e.classList.remove(...e.classList);
     });
     for (const row_index in this.field) {
       for (const cell_index in this.field[row_index]) {
+        let element = this.elementAt([row_index, cell_index]);
+
         const cell = this.field[row_index][cell_index];
         if (cell.revealed) {
-          this.elementAt([row_index, cell_index]).classList.add("revealed");
+          element.classList.add("revealed");
           if (cell.bomb) {
-            this.elementAt([row_index, cell_index]).classList.add("bomb");
+            element.classList.add("bomb");
+          } else {
+            element.classList.add(`bombs-around-${cell.bombs_around}`)
           }
         }
       }
@@ -142,7 +174,7 @@ class Mine {
   }
 
   elementAt(point) {
-    return document.querySelector(`.${this.id(point[1], point[0])}`)
+    return document.querySelector(`#${this.id(point[1], point[0])}`)
   }
 
   cellAt(point) {

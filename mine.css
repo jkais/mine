@@ -31,6 +31,35 @@ body {
     top: 50%
 }
 
+.bombs-around-1:before {
+    content: "1"
+}
+
+.bombs-around-2:before {
+    content: "2"
+}
+
+.bombs-around-3:before {
+    content: "3"
+}
+
+.bombs-around-4:before {
+    content: "5"
+}
+
+.bombs-around-6:before {
+    content: "6"
+}
+
+.bombs-around-7:before {
+    content: "7"
+}
+
+.bombs-around-8:before {
+    content: "8"
+}
+
+
 #grid .revealed {
     background-color: white;
 }
